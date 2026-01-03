@@ -1,0 +1,12 @@
+remote: 
+  host: localhost
+  port: 8883
+tls:
+  enabled: true
+  caCert: ca.cert.pem
+auth:
+  basicAuth:
+    username: admin
+    password: dummy
+  jwt:
+    tokenFile: /var/run/token
