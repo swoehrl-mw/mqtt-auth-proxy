@@ -9,10 +9,11 @@ mqtt5-protocol = "0.8.0"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_yaml = "0.9.34"
 tokio = { version = "1.48.0", features = ["full"] }
-tokio-rustls = { version = "0.26.4", default-features = false, features = [] }
+tokio-rustls = { version = "0.26.4" }
 webpki-roots = "1.0.4"
 tracing = { version="0.1", features=["log"] }
 tracing-subscriber = { version="0.3.18", features=["fmt", "json", "std", "registry", "env-filter"] }
+rustls = {version = "0.23.35" }
 
 [target.'cfg(target_env = "musl")'.dependencies]
 mimalloc = "0.1.48"
@@ -24,4 +25,3 @@ rumqttd = "0.20.0"
 config = "0.14.1"
 certgenutil = "0.1.1"
 tempfile = "3.24.0"
-

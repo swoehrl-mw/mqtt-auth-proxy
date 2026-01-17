@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hivemq-configuration
+  namespace: default
+data:
+  # noinspection XmlPathReference
+  config.xml: |-
+    <?xml version="1.0"?>
+    <hivemq xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="config.xsd">
+      <listeners>
+        <tcp-listener>
+          <port>1883</port>
+          <bind-address>0.0.0.0</bind-address>
+        </tcp-listener>
+        <tls-tcp-listener>
+          <port>8883</port>
+          <bind-address>0.0.0.0</bind-address>
+          <tls>
+            <keystore>
+              <path>/tls-hivemq-server-cert/keystore.jks</path>
+              <password>changeme</password>
+              <private-key-password>changeme</private-key-password>
+            </keystore>
+            <truststore>
+              <path>/tls-hivemq-server-cert/truststore.jks</path>
+              <password>changeme</password>
+            </truststore>
+          </tls>
+        </tls-tcp-listener>
+      </listeners>
+      <cluster>
+        <transport>
+          <tcp>
+            <bind-address>0.0.0.0</bind-address>
+            <bind-port>7000</bind-port>
+          </tcp>
+        </transport>
+        <enabled>true</enabled>
+        <discovery>
+          <extension/>
+        </discovery>
+        <replication>
+          <replica-count>2</replica-count>
+        </replication>
+      </cluster>
+      <health-api>
+        <enabled>true</enabled>
+        <listeners>
+          <http>
+            <port>8889</port>
+            <bind-address>0.0.0.0</bind-address>
+          </http>
+        </listeners>
+      </health-api>
+      <control-center>
+        <listeners>
+          <http>
+            <port>8080</port>
+            <bind-address>0.0.0.0</bind-address>
+          </http>
+        </listeners>
+      </control-center>
+      <restrictions>
+        <max-client-id-length>65535</max-client-id-length>
+        <max-topic-length>65535</max-topic-length>
+        <max-connections>-1</max-connections>
+        <incoming-bandwidth-throttling>0</incoming-bandwidth-throttling>
+        <no-connect-idle-timeout>10000</no-connect-idle-timeout>
+      </restrictions>
+      <mqtt>
+        <queued-messages>
+          <max-queue-size>1000000</max-queue-size>
+          <strategy>discard</strategy>
+        </queued-messages>
+        <receive-maximum>
+          <server-receive-maximum>1000</server-receive-maximum>
+        </receive-maximum>
+      </mqtt>
+    </hivemq>
+  tracing.xml: |-
+    <?xml version="1.0" encoding="UTF-8" ?>
+    <tracing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="tracing.xsd">
+      <context-propagation>
+        <outbound-context-propagation>
+          <enabled>false</enabled>
+        </outbound-context-propagation>
+      </context-propagation>
+      <sampling>
+        <publish-sampling>
+          <enabled>true</enabled>
+        </publish-sampling>
+      </sampling>
+    </tracing>

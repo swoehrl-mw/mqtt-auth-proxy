@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hivemq-configuration-security
+  namespace: default
+data:
+  config.xml: |-
+    <enterprise-security-extension xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="config.xsd" version="1">
+      <realms>
+        <jwt-realm>
+            <name>kubernetes-jwt</name>
+            <enabled>true</enabled>
+            <configuration>
+                <jwks-endpoint>https://kubernetes.default.svc.cluster.local/openid/v1/jwks</jwks-endpoint>
+                <jwks-default-cache-duration>1800</jwks-default-cache-duration>
+                <tls-trust-store password="changeit">/truststore/truststore.jks</tls-trust-store>
+            </configuration>
+        </jwt-realm>
+      </realms>
+      <pipelines>
+        <listener-pipeline listener="tls-tcp-listener-8883">
+          <jwt-authentication-manager>
+              <realm>kubernetes-jwt</realm>
+              <jwt-validation>
+                  <reserved-claims>
+                      <aud>hivemq</aud>
+                  </reserved-claims>
+              </jwt-validation>
+          </jwt-authentication-manager>
+          <allow-all-authorization-manager/>
+        </listener-pipeline>
+      </pipelines>
+    </enterprise-security-extension>

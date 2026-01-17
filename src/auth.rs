@@ -10,6 +10,7 @@ pub fn handle_auth_packet(auth: AuthMethod, connect: &mut ConnectPacket) {
         }
         AuthMethod::Jwt { token_file } => {
             let token = std::fs::read_to_string(&token_file).unwrap();
+            connect.username = Some("jwt".to_owned());
             connect.password = Some(token.as_bytes().to_owned());
         }
     }
@@ -45,7 +46,7 @@ mod tests {
             token_file: tokenfile.path().to_path_buf(),
         };
         handle_auth_packet(auth, &mut connect);
-        assert_eq!(connect.username, None);
+        assert_eq!(connect.username, Some("jwt".to_owned()));
         assert_eq!(connect.password, Some(token.to_owned()));
     }
 }

@@ -1,0 +1,93 @@
+---
+apiVersion: hivemq.com/v1
+kind: HiveMQPlatform
+metadata:
+  name: hivemq
+  namespace: default
+spec:
+  configMapName: hivemq-configuration
+  logLevel: INFO
+  operatorRestApiPort: 7979
+  healthApiPort: 8889
+  metricsPath: /
+  statefulSet:
+    spec:
+      replicas: 2
+      template:
+        spec:
+          initContainers:
+            # HiveMQ requires certificates in a java truststore, but K8s provides them only as pem files
+            # Use a java container with keytool to convert pem to truststore
+            - name: create-truststore
+              image: eclipse-temurin:25-jre
+              command:
+                - sh
+                - -c
+                - |
+                  keytool -importcert \
+                    -file /var/run/secrets/kubernetes.io/serviceaccount/ca.crt \
+                    -alias custom-ca \
+                    -keystore /truststore/truststore.jks \
+                    -storepass changeit \
+                    -noprompt
+              volumeMounts:
+                - name: truststore
+                  mountPath: /truststore
+          automountServiceAccountToken: true
+          containers:
+            - name: hivemq
+              image: "docker.io/hivemq/hivemq4:4.47.1"
+              imagePullPolicy: IfNotPresent
+              ports:
+                - name: mqtts-8883
+                  containerPort: 8883
+              resources:
+                limits:
+                  cpu: 2000m
+                  memory: 2048Mi
+                requests:
+                  cpu: 500m
+                  memory: 2048Mi
+              volumeMounts:
+                - name: hivemq-server-cert
+                  mountPath: /tls-hivemq-server-cert
+                  readOnly: true
+                - name: hivemq-data
+                  mountPath: /opt/hivemq/data
+                - name: truststore
+                  mountPath: /truststore
+          volumes:
+              - name: truststore
+                emptyDir: {}
+              - name: hivemq-server-cert
+                secret:
+                  secretName: hivemq-server-cert
+      volumeClaimTemplates:
+        - kind: PersistentVolumeClaim
+          apiVersion: v1
+          metadata:
+            name: hivemq-data
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 1Gi
+  services:
+    - metadata:
+        name: hivemq
+      spec:
+        ports:
+          - name: mqtts-8883
+            targetPort: mqtts-8883
+            port: 8883
+  extensions:
+    - id: hivemq-allow-all-extension
+      enabled: true
+      supportsHotReload: false
+      extensionUri: "preinstalled"
+    - id: hivemq-enterprise-security-extension
+      enabled: true
+      supportsHotReload: false
+      configMapName: "hivemq-configuration-security"
+      extensionUri: preinstalled

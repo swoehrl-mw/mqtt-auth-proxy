@@ -3,6 +3,7 @@ use std::{fs::File, io::Read};
 use serde::Deserialize;
 
 #[derive(Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Config {
     pub listener: Option<String>,
     pub remote: Remote,
@@ -11,17 +12,20 @@ pub struct Config {
 }
 
 #[derive(Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Remote {
     pub host: String,
     pub port: u16,
 }
 
 #[derive(Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Tls {
     pub enabled: bool,
     pub ca_cert: Option<std::path::PathBuf>,
 }
 #[derive(Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Auth {
     #[serde(flatten)]
     pub auth: AuthMethod,
@@ -30,6 +34,7 @@ pub struct Auth {
 #[serde(rename_all = "camelCase")]
 pub enum AuthMethod {
     BasicAuth { username: String, password: String },
+    #[serde(rename_all = "camelCase")]
     Jwt { token_file: std::path::PathBuf },
 }
 

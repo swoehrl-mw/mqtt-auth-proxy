@@ -1,0 +1,82 @@
+# Self-signed issuer to create and sign certs (server and client) for hivemq
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: hivemq-selfsigned-issuer
+  namespace: cert-manager
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: hivemq-ca-certificate
+  namespace: cert-manager
+spec:
+  secretName: hivemq-ca-cert
+  duration: 9000h # ~1year
+  renewBefore: 360h # 15d
+  commonName: HiveMQ CA
+  isCA: true
+  usages:
+    - digital signature
+    - key encipherment
+  privateKey:
+    algorithm: RSA
+    size: 2048
+    encoding: PKCS1
+  issuerRef:
+    name: hivemq-selfsigned-issuer
+---
+# ClusterIssuer so that it can be used from all namespaces
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: hivemq-ca-issuer
+spec:
+  ca:
+    secretName: hivemq-ca-cert
+---
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: jks-password-secret
+  namespace: default
+data:
+  # Password is: changeme
+  password-key: Y2hhbmdlbWU=
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: hivemq-server-cert
+  namespace: default
+spec:
+  secretName: hivemq-server-cert
+  duration: 9000h # ~1year
+  renewBefore: 720h # 30 days
+  isCA: false
+  dnsNames:
+    - localhost  # To allow connections via port-forward
+    - hivemq.default.svc.cluster.local # For cluster-internal communication
+    - hivemq # For cluster-internal communication
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+  privateKey:
+    algorithm: RSA
+    size: 2048
+    encoding: PKCS1
+  commonName: HiveMQ Server Cert
+  issuerRef:
+    name: hivemq-ca-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
+  keystores:
+    jks:
+      create: true
+      passwordSecretRef: # Password used to encrypt the keystore/truststore
+        key: password-key
+        name: jks-password-secret

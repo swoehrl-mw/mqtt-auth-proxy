@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mqtt-proxy-config
+data:
+  config.yaml: |
+    remote:
+      host: hivemq.default.svc.cluster.local
+      port: 8883
+    tls:
+      enabled: true
+      caCert: /certs/ca.crt
+    auth:
+      jwt:
+        tokenFile: /var/run/secrets/tokens/hivemq
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mqtt-client
+  namespace: default
+spec:
+  minReadySeconds: 10
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mqtt-client
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mqtt-client
+    spec:
+      containers:
+        - name: mqttui
+          command:
+          - tail
+          - -f
+          - /dev/null
+          image: ghcr.io/swoehrl-mw/mqttui:0.22.1
+          imagePullPolicy: Always
+        - name: proxy-sidecar
+          image: ghcr.io/swoehrl-mw/mqtt-auth-proxy:dev
+          imagePullPolicy: Always
+          env:
+            - name: CONFIG_FILE
+              value: /app/config/config.yaml
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config
+            - name: hivemq
+              mountPath: /var/run/secrets/tokens
+            - name: ca
+              mountPath: /certs
+      terminationGracePeriodSeconds: 2
+      volumes:
+        - name: config-volume
+          configMap:
+            name: mqtt-proxy-config
+        - name: ca
+          secret:
+            secretName: hivemq-server-cert
+        - name: hivemq
+          projected:
+            sources:
+            - serviceAccountToken:
+                path: hivemq
+                expirationSeconds: 7200
+                audience: hivemq

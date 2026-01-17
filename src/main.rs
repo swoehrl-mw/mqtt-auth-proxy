@@ -7,6 +7,7 @@ static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     init_logging();
+    rustls::crypto::aws_lc_rs::default_provider().install_default().unwrap();
     let config = mqtt_auth_proxy::config::load_config();
     mqtt_auth_proxy::run_proxy(config).await
 }
