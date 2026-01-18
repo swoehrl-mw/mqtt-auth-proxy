@@ -91,6 +91,17 @@ where
                     self.packet_from_remote(&mut buffer_remote[..n]).await;
                 }
             }
+
+            if self.auth.is_none() {
+                // no more auth to intercept/perform, switch to more efficient mode
+                break;
+            }
+        }
+        match tokio::io::copy_bidirectional(&mut self.local, &mut self.remote).await {
+            Ok((ab, ba)) => {
+                tracing::info!("Ending connection. Copied {ab} byts from local to remote and {ba} bytes from remote to local");
+            }
+            Err(e) => tracing::warn!("Ending connection. Got error while proxying: {e}")
         }
     }
 
