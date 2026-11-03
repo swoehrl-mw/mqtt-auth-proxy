@@ -33,9 +33,14 @@ pub struct Auth {
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub enum AuthMethod {
-    BasicAuth { username: String, password: String },
+    BasicAuth {
+        username: String,
+        password: String,
+    },
     #[serde(rename_all = "camelCase")]
-    Jwt { token_file: std::path::PathBuf },
+    Jwt {
+        token_file: std::path::PathBuf,
+    },
 }
 
 pub fn load_config() -> Config {
@@ -44,5 +49,5 @@ pub fn load_config() -> Config {
     let mut contents = String::new();
     f.read_to_string(&mut contents)
         .expect("something went wrong reading the file");
-    serde_yaml::from_str(&contents).unwrap()
+    serde_saphyr::from_str(&contents).unwrap()
 }
